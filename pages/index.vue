@@ -68,7 +68,7 @@ onMounted(() => {
   // ★ 変更点：グローバル関数登録の代わりに、標準の 'message' イベントをリッスン
   window.addEventListener('message', (event) => {
     // (オプション) event.origin をチェックして、信頼できる送信元か確認
-    // if (event.origin !== 'app://flutter.dev') return;
+    console.log('message イベントを受信:', event.origin, event.data);
     
     // event.data にFlutterから送られたデータが入っている
     if (event.data) {
