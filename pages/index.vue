@@ -72,7 +72,7 @@ onMounted(() => {
     
     // event.data にFlutterから送られたデータが入っている
     if (event.data) {
-      handleMessageFromFlutter(event.data);
+      handleMessageFromFlutter(event.data + ' ' + event.origin);
     }
   });
 
