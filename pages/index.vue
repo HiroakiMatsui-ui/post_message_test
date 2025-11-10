@@ -20,18 +20,15 @@ import { ref, onMounted } from 'vue';
 const messageFromFlutter = ref('まだ受信していません');
 
 /**
- * Flutterから呼び出されるグローバル関数
- * @param message Flutterから渡されるデータ（文字列）
+ * Flutterからメッセージを受信したときの処理
+ * (この関数名はグローバルである必要がなくなりました)
  */
 const handleMessageFromFlutter = (message: string) => {
   console.log('Flutterからメッセージを受信:', message);
-  
   try {
-    // Flutter側でJSON文字列を送信することを推奨
     const data = JSON.parse(message);
     messageFromFlutter.value = `[${data.type}] ${data.payload}`;
   } catch (e) {
-    // プレーンテキストの場合
     messageFromFlutter.value = message;
   }
 };
@@ -68,20 +65,21 @@ const sendMessageToFlutter = () => {
 // Nuxt.jsでは `window` オブジェクトはクライアントサイドでのみアクセス可能です
 // `onMounted` ライフサイクルフック内で初期化処理を行います
 onMounted(() => {
-  
-  // (A) Flutter -> Web 受信用の関数をwindowに登録
-  // これでFlutter側から `window.handleMessageFromFlutter(...)` を呼び出せるようになります
-  window.handleMessageFromFlutter = handleMessageFromFlutter;
+  // ★ 変更点：グローバル関数登録の代わりに、標準の 'message' イベントをリッスン
+  window.addEventListener('message', (event) => {
+    // (オプション) event.origin をチェックして、信頼できる送信元か確認
+    // if (event.origin !== 'app://flutter.dev') return;
+    
+    // event.data にFlutterから送られたデータが入っている
+    if (event.data) {
+      handleMessageFromFlutter(event.data);
+    }
+  });
 
-  // (B) InAppWebViewのJavaScriptブリッジが準備完了したことを待つ
-  // `window.myMessager` は、Flutter側でリスナーが登録された後に
-  // `flutterInAppWebViewPlatformReady` イベントより後に利用可能になります。
   window.addEventListener('flutterInAppWebViewPlatformReady', (event) => {
     console.log('InAppWebView プラットフォーム準備完了');
-    // これ以降、`window.myMessager` が利用可能になっているはずです
   });
 });
-
 
 // --- TypeScriptの型定義 (任意) ---
 // グローバルな `window` オブジェクトに型を定義しておくと開発がスムーズです
